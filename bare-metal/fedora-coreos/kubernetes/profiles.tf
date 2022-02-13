@@ -78,7 +78,9 @@ resource "matchbox_profile" "workers" {
 
   kernel = local.kernel
   initrd = local.initrd
-  args   = concat(local.args, var.kernel_args)
+  args   = concat(local.args, var.kernel_args, [
+    "coreos.inst.install_dev=${coalesce(var.workers.*.install_disk[count.index], var.install_disk)}"
+  ])
 
   raw_ignition = data.ct_config.worker-ignitions.*.rendered[count.index]
 }
