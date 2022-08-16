@@ -8,8 +8,6 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "ip=dhcp",
-    "rd.neednet=1",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
   ]
 
@@ -22,8 +20,6 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=${var.matchbox_http_endpoint}/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "ip=dhcp",
-    "rd.neednet=1",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
   ]
 
