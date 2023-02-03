@@ -29,7 +29,7 @@ systemd:
         After=afterburn.service
         Wants=rpc-statd.service
         [Service]
-        Environment=KUBELET_IMAGE=quay.io/poseidon/kubelet:v1.24.3
+        Environment=KUBELET_IMAGE=quay.io/poseidon/kubelet:v1.26.1
         EnvironmentFile=/run/metadata/afterburn
         ExecStartPre=/bin/mkdir -p /etc/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
@@ -39,6 +39,7 @@ systemd:
         ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
         ExecStartPre=-/usr/bin/podman rm kubelet
         ExecStart=/usr/bin/podman run --name kubelet \
+          --log-driver k8s-file \
           --privileged \
           --pid host \
           --network host \
@@ -58,19 +59,9 @@ systemd:
           --volume /var/run/lock:/var/run/lock:z \
           --volume /opt/cni/bin:/opt/cni/bin:z \
           $${KUBELET_IMAGE} \
-          --anonymous-auth=false \
-          --authentication-token-webhook \
-          --authorization-mode=Webhook \
           --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
-          --cgroup-driver=systemd \
-          --cgroups-per-qos=true \
-          --container-runtime=remote \
+          --config=/etc/kubernetes/kubelet.yaml \
           --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
-          --enforce-node-allocatable=pods \
-          --client-ca-file=/etc/kubernetes/ca.crt \
-          --cluster_dns=${cluster_dns_service_ip} \
-          --cluster_domain=${cluster_domain_suffix} \
-          --healthz-port=0 \
           --kubeconfig=/var/lib/kubelet/kubeconfig \
           --node-labels=node.kubernetes.io/node \
           %{~ for label in split(",", node_labels) ~}
@@ -79,29 +70,11 @@ systemd:
           %{~ for taint in split(",", node_taints) ~}
           --register-with-taints=${taint} \
           %{~ endfor ~}
-          --pod-manifest-path=/etc/kubernetes/manifests \
-          --provider-id=aws:///$${AFTERBURN_AWS_AVAILABILITY_ZONE}/$${AFTERBURN_AWS_INSTANCE_ID} \
-          --read-only-port=0 \
-          --resolv-conf=/run/systemd/resolve/resolv.conf \
-          --rotate-certificates \
-          --volume-plugin-dir=/var/lib/kubelet/volumeplugins
+          --provider-id=aws:///$${AFTERBURN_AWS_AVAILABILITY_ZONE}/$${AFTERBURN_AWS_INSTANCE_ID}
         ExecStop=-/usr/bin/podman stop kubelet
         Delegate=yes
         Restart=always
         RestartSec=10
-        [Install]
-        WantedBy=multi-user.target
-    - name: delete-node.service
-      enabled: true
-      contents: |
-        [Unit]
-        Description=Delete Kubernetes node on shutdown
-        [Service]
-        Environment=KUBELET_IMAGE=quay.io/poseidon/kubelet:v1.24.3
-        Type=oneshot
-        RemainAfterExit=true
-        ExecStart=/bin/true
-        ExecStop=/bin/bash -c '/usr/bin/podman run --volume /var/lib/kubelet:/var/lib/kubelet:ro,z --entrypoint /usr/local/bin/kubectl $${KUBELET_IMAGE} --kubeconfig=/var/lib/kubelet/kubeconfig delete node $HOSTNAME'
         [Install]
         WantedBy=multi-user.target
 storage:
@@ -113,6 +86,38 @@ storage:
       contents:
         inline: |
           ${kubeconfig}
+    - path: /etc/kubernetes/kubelet.yaml
+      mode: 0644
+      contents:
+        inline: |
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          authentication:
+            anonymous:
+              enabled: false
+            webhook:
+              enabled: true
+            x509:
+              clientCAFile: /etc/kubernetes/ca.crt
+          authorization:
+            mode: Webhook
+          cgroupDriver: systemd
+          clusterDNS:
+            - ${cluster_dns_service_ip}
+          clusterDomain: ${cluster_domain_suffix}
+          healthzPort: 0
+          rotateCertificates: true
+          shutdownGracePeriod: 45s
+          shutdownGracePeriodCriticalPods: 30s
+          staticPodPath: /etc/kubernetes/manifests
+          readOnlyPort: 0
+          resolvConf: /run/systemd/resolve/resolv.conf
+          volumePluginDir: /var/lib/kubelet/volumeplugins
+    - path: /etc/systemd/logind.conf.d/inhibitors.conf
+      contents:
+        inline: |
+          [Login]
+          InhibitDelayMaxSec=45s
     - path: /etc/sysctl.d/max-user-watches.conf
       contents:
         inline: |

@@ -4,8 +4,140 @@ Notable changes between versions.
 
 ## Latest
 
+## v1.26.1
+
+* Kubernetes [v1.26.1](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.26.md#v1261)
+* Update etcd from v3.5.6 to [v3.5.7](https://github.com/etcd-io/etcd/releases/tag/v3.5.7)
+* Update Cilium from v1.12.4 to [v1.12.5](https://github.com/cilium/cilium/releases/tag/v1.12.5)
+* Update Calico from v3.24.5 to [v3.25.0](https://github.com/projectcalico/calico/releases/tag/v3.25.0)
+* Update CoreDNS from v1.9.3 to [v1.9.4](https://github.com/poseidon/terraform-render-bootstrap/pull/341)
+
+## v1.26.0
+
+* Kubernetes [v1.26.0](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.26.md#v1260)
+* Update etcd from v3.5.5 to [v3.5.6](https://github.com/etcd-io/etcd/releases/tag/v3.5.6)
+* Update Cilium from v1.12.3 to [v1.12.4](https://github.com/cilium/cilium/releases/tag/v1.12.4)
+* Update flannel from v0.15.1 to [v0.20.2](https://github.com/flannel-io/flannel/releases/tag/v0.20.2)
+* Reminder: Modules are no longer published to the [Terraform Module Registry](https://registry.terraform.io/search/modules?q=poseidon) ([#1282](https://github.com/poseidon/typhoon/pull/1282))
+  * See [#1282](https://github.com/poseidon/typhoon/pull/1282) and [v1.25.4](https://github.com/poseidon/typhoon/releases/tag/v1.25.4) for details
+
+### AWS
+
+* Migrate AWS launch configurations to launch templates ([#1275](https://github.com/poseidon/typhoon/pull/1275))
+  * Starting Dec 31, 2022 AWS won't add new instance types/families to launch configurations
+
+### Addons
+
+* Update ingress-nginx from v1.3.1 to [v1.5.1](https://github.com/kubernetes/ingress-nginx/releases/tag/controller-v1.5.1)
+* Update Prometheus from v2.40.1 to [v2.40.5](https://github.com/prometheus/prometheus/releases/tag/v2.40.5)
+* Update node-exporter from v1.3.1 to [v1.5.0](https://github.com/prometheus/node_exporter/releases/tag/v1.5.0)
+* Update kube-state-metrics from v2.6.0 to [v2.7.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.7.0)
+* Update Grafana from v9.2.4 to [v9.3.1](https://github.com/grafana/grafana/releases/tag/v9.3.1)
+
+## v1.25.4
+
+* Kubernetes [v1.25.4](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.25.md#v1254)
+* Update Calico from v3.24.1 to [v3.24.5](https://github.com/projectcalico/calico/releases/tag/v3.24.5)
+* Allow Kubelet kubeconfig to drain nodes, if desired ([#330](https://github.com/poseidon/terraform-render-bootstrap/pull/330))
+* Re-enable Kubelet Graceful Node Shutdown ([#1261](https://github.com/poseidon/typhoon/pull/1261))
+  * Introduce companion project [poseidon/scuttle](https://github.com/poseidon/scuttle)
+* Link to new Mastodon account for release announcements
+  * [@typhoon@fosstodon.org](https://fosstodon.org/@typhoon)
+  * [@poseidon@fosstodon.org](https://fosstodon.org/@poseidon)
+* Deprecate publishing to the [Terraform Module Registry](https://registry.terraform.io/search/modules?q=poseidon)
+  * Typhoon docs have always shown using Git-based module sources, not the Terraform Module Registry
+  * Module usage should be `source = "git::https://github.com/poseidon/typhoon/...` not `source = poseidon/kubernetes/...`
+  * Terraform's Module Registry requires subtree mirroring typhoon to special terraform-platform-kubernetes repos, only supports release versions (no commit SHAs or forks), only ever contained Flatcar Linux modules (not Fedora CoreOS) for historical reasons
+  * Note, this does not affect Terraform Providers like `poseidon/matchbox` or `poseidon/ct`, the registry works well for providers
+
+### Fedora CoreOS
+
+* Remove unused `Wants=network.target` from `etcd-member.service` ([#1254](https://github.com/poseidon/typhoon/pull/1254))
+
+### Cloud
+
+* Remove defunct `delete-node.service` from worker node configurations ([#1256](https://github.com/poseidon/typhoon/pull/1256))
+
+### Addons
+
+* Update Prometheus from v2.39.1 to [v2.40.1](https://github.com/prometheus/prometheus/releases/tag/v2.40.1)
+* Update Grafana from v9.1.7 to [v9.2.4](https://github.com/grafana/grafana/releases/tag/v9.2.4)
+
+## v1.25.3
+
+* Kubernetes [v1.25.3](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.25.md#v1253)
+* Switch Kubernetes registry from `k8s.gcr.io` to `registry.k8s.io` for addons ([#1246](https://github.com/poseidon/typhoon/pull/1246))
+* Update Cilium from v1.12.2 to [v1.12.3](https://github.com/cilium/cilium/releases/tag/v1.12.3) ([#1253](https://github.com/poseidon/typhoon/pull/1253))
+
+### Azure
+
+* Change default Azure `worker_type` from [`Standard_DS1_v2`](https://learn.microsoft.com/en-us/azure/virtual-machines/dv2-dsv2-series#dsv2-series) to [`Standard_D2as_v5`](https://learn.microsoft.com/en-us/azure/virtual-machines/dasv5-dadsv5-series#dasv5-series) ([#1248](https://github.com/poseidon/typhoon/pull/1248))
+  * Get 2 VCPU, 7 GiB, 12500Mbps (vs 1 VCPU, 3.5GiB, 750 Mbps)
+  * Small increase in pay-as-you-go price ($53.29 -> $62.78)
+  * Small increase in spot price ($5.64/mo -> $7.37/mo)
+  * Change from Intel to AMD EPYC (`D2as_v5` cheaper than `D2s_v5`)
+
+### Flatcar Linux
+
+* Add Flatcar Linux ARM64 support on Azure ([docs](https://typhoon.psdn.io/advanced/arm64/), [#1251](https://github.com/poseidon/typhoon/pull/1251))
+* Switch from Azure Hypervisor gen1 to gen2 (**action required**) ([#1248](https://github.com/poseidon/typhoon/pull/1248))
+  * Run `az vm image terms accept --publish kinvolk --offer flatcar-container-linux-free --plan stable-gen2`
+
+### Docs
+
+* Remove old docs note about not supporting ARM64 with Calico
+  * Typhoon supports ARM64 with `cilium`, `calico`, and `flannel`
+
+### Addons
+
+* Update Prometheus from v2.38.0 to [v2.39.1](https://github.com/prometheus/prometheus/releases/tag/v2.39.1)
+* Update Grafana from v9.1.6 to [v9.1.7](https://github.com/grafana/grafana/releases/tag/v9.1.7)
+
+## v1.25.2
+
+Kubernetes v1.25.2 was skipped since there were minimal changes upstream.
+
+## v1.25.1
+
+* Kubernetes [v1.25.1](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.25.md#v1251)
+* Update etcd from v3.5.4 to [v3.5.5](https://github.com/etcd-io/etcd/releases/tag/v3.5.5)
+* Update Cilium from v1.12.1 to [v1.12.2](https://github.com/cilium/cilium/releases/tag/v1.12.2)
+* Update Calico from v3.23.3 to [v3.24.1](https://github.com/projectcalico/calico/releases/tag/v3.24.1)
+* Revert Kubelet Graceful Node Shutdown on worker nodes ([#1227](https://github.com/poseidon/typhoon/pull/1227))
+  * Fix issue where non-critical pods are left in Error/Completed state on node shutdown
+* Remove feature flag disable workaround for [kubernetes/kubernetes#112081](https://github.com/kubernetes/kubernetes/issues/112081)
+  * Kubernetes [reverted](https://github.com/kubernetes/kubernetes/pull/112078) `LocalStorageCapacityIsolationFSQuotaMonitoring` back to alpha
+* Remove workaround for preventing `search .` propagation in [kubernetes/kubernetes#112135](https://github.com/kubernetes/kubernetes/issues/112135)
+  * Upstream Kubernetes [fix](https://github.com/kubernetes/kubernetes/pull/112157)
+
+### Addons
+
+* Update kube-state-metrics from v2.5.0 to [v2.6.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.6.0)
+* Update ingress-nginx from v1.3.0 to [v1.3.1](https://github.com/kubernetes/ingress-nginx/releases/tag/controller-v1.3.1)
+* Update Grafana from v9.1.0 to [v9.1.6](https://github.com/grafana/grafana/releases/tag/v9.1.6)
+
+## v1.25.0
+
+* Kubernetes [v1.25.0](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.25.md#v1250)
+  * Disable LocalStorageCapacityIsolationFSQuotaMonitoring feature gate ([#1220](https://github.com/poseidon/typhoon/pull/1220), fixes [kubernetes#112081](https://github.com/kubernetes/kubernetes/issues/112081))
+  * Add workaround to revert adding "search ." to containers' `/etc/resolv.conf` ([#1224](https://github.com/poseidon/typhoon/pull/1224), fixes [kubernetes#112135](https://github.com/kubernetes/kubernetes/issues/112135))
+* Migrate most Kubelet flags to KubeletConfiguration file ([#1219](https://github.com/poseidon/typhoon/pull/1219))
+* Configure Kubelet Graceful Node Shutdown ([#1222](https://github.com/poseidon/typhoon/pull/1222))
+  * Allow up to 30s for critical pods to gracefully shutdown on node shutdown
+  * Allow up to 15s for regular pods to gracefully shutdown on node shutdown
+  * Mark node NotReady promptly on node shutdown
+  * Lengthen systemd inhibitor lock max delay from 5s to 45s
+
+### Fedora CoreOS
+
+* Change Podman `log-driver` from `journald` to `k8s-file` ([#1221](https://github.com/poseidon/typhoon/pull/1221))
+  * Fix `etcd-member` and Kubelet systemd service log lines appearing twice in journal logs
+
+## v1.24.4
+
+* Kubernetes [v1.24.4](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.24.md#v1244)
 * Update CoreDNS from v1.8.6 to [v1.9.3](https://github.com/poseidon/terraform-render-bootstrap/pull/318)
-* Update Cilium from v1.11.7 to [v1.12.0](https://github.com/cilium/cilium/releases/tag/v1.12.0)
+* Update Cilium from v1.11.7 to [v1.12.1](https://github.com/cilium/cilium/releases/tag/v1.12.1)
 * Update Calico from v3.23.1 to [v3.23.3](https://github.com/projectcalico/calico/releases/tag/v3.23.3)
 * Switch Kubernetes registry from `k8s.gcr.io` to `registry.k8s.io` ([#1206](https://github.com/poseidon/typhoon/pull/1206))
 * Remove use of deprecated Terraform [template](https://registry.terraform.io/providers/hashicorp/template) provider ([#1194](https://github.com/poseidon/typhoon/pull/1194))
@@ -13,16 +145,16 @@ Notable changes between versions.
 ### Fedora CoreOS
 
 * Remove ineffective `/etc/fedora-coreos/iptables-legacy.stamp` ([#1201](https://github.com/poseidon/typhoon/pull/1201))
-  * Typhoon already uses iptables v1.8.7 (nf_tables) since F36
-  * Staying on legacy iptables required a file in `/etc/coreos`
+  * Typhoon already uses iptables v1.8.7 (nf_tables) since FCOS 36
+  * Staying on legacy iptables required a file in `/etc/coreos` instead
 
 ### Flatcar Linux
 
-* Migrate Flatcar Linux from Ignition spec v2.3.0 to v3.3.0 (**action required**)
+* Migrate Flatcar Linux from Ignition spec v2.3.0 to v3.3.0 ([#1196](https://github.com/poseidon/typhoon/pull/1196)) (**action required**)
   * Flatcar Linux 3185.0.0+ [supports](https://flatcar-linux.org/docs/latest/provisioning/ignition/specification/#ignition-v3) Ignition v3.x specs (which are rendered from Butane Configs, like Fedora CoreOS)
   * `poseidon/ct` v0.11.0 [supports](https://github.com/poseidon/terraform-provider-ct/pull/131) the `flatcar` Butane Config variant
-  * Require poseidon v0.11+ and Flatcar Linux 3185.0.0+
-* Modify any Flatcar Linux snippets to use the [Butane Config](https://coreos.github.io/butane/config-flatcar-v1_0/) format (**action required**):
+  * Require poseidon/ct v0.11+ and Flatcar Linux 3185.0.0+
+* Please modify any Flatcar Linux snippets to use the [Butane Config](https://coreos.github.io/butane/config-flatcar-v1_0/) format (**action required**)
 
 ```tf
 variant: flatcar
@@ -32,8 +164,8 @@ version: 1.0.0
 
 ### AWS
 
-* [Refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html) instances in autoscaling group when launch configuration changes
-  * Changes to worker launch configurations start an autoscaling group instance refresh to replace instances
+* [Refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html) instances in autoscaling group when launch configuration changes ([#1208](https://github.com/poseidon/typhoon/pull/1208)) ([docs](https://typhoon.psdn.io/topics/maintenance/#node-configuration-updates), **important**)
+  * Worker launch configuration changes start an autoscaling group instance refresh to replace instances
   * Instance refresh creates surge instances, waits for a warm-up period, then deletes old instances
   * Changing `worker_type`, `disk_*`, `worker_price`, `worker_target_groups`, or Butane `worker_snippets` on existing worker nodes will replace instances
   * New AMIs or changing `os_stream` will be ignored, to allow Fedora CoreOS or Flatcar Linux to keep themselves updated
@@ -43,23 +175,24 @@ version: 1.0.0
 
 ### Google
 
-* [Roll](https://cloud.google.com/compute/docs/instance-groups/rolling-out-updates-to-managed-instance-groups) instance template changes to worker managed instance groups ([#1207](https://github.com/poseidon/typhoon/pull/1207)) (**important**)
-  * Changes to worker instance templates roll out by gradually replacing instances
-  * Automatic rollouts create surge instances, wait for Kubelet health checks, then delete old instances (0 unavailable instances)
-  * Changing `worker_type`, `disk_size`, `preemptible`, or Butane `worker_snippets` on existing worker nodes will replace instances
-  * New AMIs or changing `os_stream` will be ignored, to allow Fedora CoreOS or Flatcar Linux to keep themselves updated
+* [Roll](https://cloud.google.com/compute/docs/instance-groups/rolling-out-updates-to-managed-instance-groups) instance template changes to worker managed instance groups ([#1207](https://github.com/poseidon/typhoon/pull/1207)) ([docs](https://typhoon.psdn.io/topics/maintenance/#node-configuration-updates), **important**)
+  * Worker instance template changes roll out by gradually replacing instances
+  * Automatic rollouts create surge instances, wait for health checks, then delete old instances (0 unavailable instances)
+  * Changing `worker_type`, `disk_size`, `worker_preemptible`, or Butane `worker_snippets` on existing worker nodes will replace instances
+  * New compute images or changing `os_stream` will be ignored, to allow Fedora CoreOS or Flatcar Linux to keep themselves updated
   * Previously, new instance templates were made in the same way, but not applied to instances unless manually replaced
 * Add health checks to worker managed instance groups (i.e. "autohealing") ([#1207](https://github.com/poseidon/typhoon/pull/1207))
-  * Use SSL health checks to probe the Kubelet every 30s
+  * Use health checks to probe kube-proxy every 30s
   * Replace worker nodes that fail the health check 6 times (3min)
-* Name `kube-apiserver` and `kubelet` health checks consistently ([#1207](https://github.com/poseidon/typhoon/pull/1207))
-  * Use name `${cluster_name}-apiserver-health` and `${cluster_name}-kubelet-health`
+* Name `kube-apiserver` and `worker` health checks consistently ([#1207](https://github.com/poseidon/typhoon/pull/1207))
+  * Use name `${cluster_name}-apiserver-health` and `${cluster_name}-worker-health`
 * Rename managed instance group from `${cluster_name}-worker-group` to `${cluster_name}-worker` ([#1207](https://github.com/poseidon/typhoon/pull/1207))
 * Fix bug provisioning clusters with multiple controller nodes ([#1195](https://github.com/poseidon/typhoon/pull/1195))
 
 ### Addons
 
-* Update Grafana from v9.0.3 to [v9.0.7](https://github.com/grafana/grafana/releases/tag/v9.0.7)
+* Update Prometheus from v2.37.0 to [v2.38.0](https://github.com/prometheus/prometheus/releases/tag/v2.38.0)
+* Update Grafana from v9.0.3 to [v9.1.0](https://github.com/grafana/grafana/releases/tag/v9.1.0)
 
 ## v1.24.3
 

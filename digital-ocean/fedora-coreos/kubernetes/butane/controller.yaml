@@ -9,15 +9,16 @@ systemd:
         [Unit]
         Description=etcd (System Container)
         Documentation=https://github.com/etcd-io/etcd
-        Wants=network-online.target network.target
+        Wants=network-online.target
         After=network-online.target
         [Service]
-        Environment=ETCD_IMAGE=quay.io/coreos/etcd:v3.5.4
+        Environment=ETCD_IMAGE=quay.io/coreos/etcd:v3.5.7
         Type=exec
         ExecStartPre=/bin/mkdir -p /var/lib/etcd
         ExecStartPre=-/usr/bin/podman rm etcd
         ExecStart=/usr/bin/podman run --name etcd \
           --env-file /etc/etcd/etcd.env \
+          --log-driver k8s-file \
           --network host \
           --volume /var/lib/etcd:/var/lib/etcd:rw,Z \
           --volume /etc/ssl/etcd:/etc/ssl/certs:ro,Z \
@@ -54,7 +55,7 @@ systemd:
         After=afterburn.service
         Wants=rpc-statd.service
         [Service]
-        Environment=KUBELET_IMAGE=quay.io/poseidon/kubelet:v1.24.3
+        Environment=KUBELET_IMAGE=quay.io/poseidon/kubelet:v1.26.1
         EnvironmentFile=/run/metadata/afterburn
         ExecStartPre=/bin/mkdir -p /etc/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
@@ -64,6 +65,7 @@ systemd:
         ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
         ExecStartPre=-/usr/bin/podman rm kubelet
         ExecStart=/usr/bin/podman run --name kubelet \
+          --log-driver k8s-file \
           --privileged \
           --pid host \
           --network host \
@@ -83,28 +85,13 @@ systemd:
           --volume /var/run/lock:/var/run/lock:z \
           --volume /opt/cni/bin:/opt/cni/bin:z \
           $${KUBELET_IMAGE} \
-          --anonymous-auth=false \
-          --authentication-token-webhook \
-          --authorization-mode=Webhook \
           --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
-          --cgroup-driver=systemd \
-          --cgroups-per-qos=true \
-          --container-runtime=remote \
+          --config=/etc/kubernetes/kubelet.yaml \
           --container-runtime-endpoint=unix:///run/containerd/containerd.sock \
-          --enforce-node-allocatable=pods \
-          --client-ca-file=/etc/kubernetes/ca.crt \
-          --cluster_dns=${cluster_dns_service_ip} \
-          --cluster_domain=${cluster_domain_suffix} \
-          --healthz-port=0 \
           --hostname-override=$${AFTERBURN_DIGITALOCEAN_IPV4_PRIVATE_0} \
           --kubeconfig=/var/lib/kubelet/kubeconfig \
           --node-labels=node.kubernetes.io/controller="true" \
-          --pod-manifest-path=/etc/kubernetes/manifests \
-          --read-only-port=0 \
-          --resolv-conf=/run/systemd/resolve/resolv.conf \
-          --register-with-taints=node-role.kubernetes.io/controller=:NoSchedule \
-          --rotate-certificates \
-          --volume-plugin-dir=/var/lib/kubelet/volumeplugins
+          --register-with-taints=node-role.kubernetes.io/controller=:NoSchedule
         ExecStop=-/usr/bin/podman stop kubelet
         Delegate=yes
         Restart=always
@@ -136,7 +123,7 @@ systemd:
             --volume /opt/bootstrap/assets:/assets:ro,Z \
             --volume /opt/bootstrap/apply:/apply:ro,Z \
             --entrypoint=/apply \
-            quay.io/poseidon/kubelet:v1.24.3
+            quay.io/poseidon/kubelet:v1.26.1
         ExecStartPost=/bin/touch /opt/bootstrap/bootstrap.done
         ExecStartPost=-/usr/bin/podman stop bootstrap
 storage:
@@ -146,6 +133,33 @@ storage:
     - path: /etc/kubernetes
     - path: /opt/bootstrap
   files:
+    - path: /etc/kubernetes/kubelet.yaml
+      mode: 0644
+      contents:
+        inline: |
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          authentication:
+            anonymous:
+              enabled: false
+            webhook:
+              enabled: true
+            x509:
+              clientCAFile: /etc/kubernetes/ca.crt
+          authorization:
+            mode: Webhook
+          cgroupDriver: systemd
+          clusterDNS:
+            - ${cluster_dns_service_ip}
+          clusterDomain: ${cluster_domain_suffix}
+          healthzPort: 0
+          rotateCertificates: true
+          shutdownGracePeriod: 45s
+          shutdownGracePeriodCriticalPods: 30s
+          staticPodPath: /etc/kubernetes/manifests
+          readOnlyPort: 0
+          resolvConf: /run/systemd/resolve/resolv.conf
+          volumePluginDir: /var/lib/kubelet/volumeplugins
     - path: /opt/bootstrap/layout
       mode: 0544
       contents:
@@ -182,6 +196,11 @@ storage:
              echo "Retry applying manifests"
              sleep 5
           done
+    - path: /etc/systemd/logind.conf.d/inhibitors.conf
+      contents:
+        inline: |
+          [Login]
+          InhibitDelayMaxSec=45s
     - path: /etc/sysctl.d/max-user-watches.conf
       contents:
         inline: |
