@@ -33,6 +33,8 @@ variable "controllers" {
     name   = string
     mac    = string
     domain = string
+
+    install_disk = optional(string)
   }))
   description = <<EOD
 List of controller machine details (unique name, identifying MAC address, FQDN)
@@ -45,12 +47,15 @@ variable "workers" {
     name   = string
     mac    = string
     domain = string
+
+    install_disk = optional(string)
   }))
   description = <<EOD
 List of worker machine details (unique name, identifying MAC address, FQDN)
 [
   { name = "node2", mac = "52:54:00:b2:2f:86", domain = "node2.example.com"},
-  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com"}
+  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com"},
+  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node4.example.com", install_disk = "nvme0n1"}
 ]
 EOD
   default     = []
